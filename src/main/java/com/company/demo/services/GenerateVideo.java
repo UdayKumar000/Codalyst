@@ -2,9 +2,11 @@ package com.company.demo.services;
 
 import com.company.demo.exceptions.VideoGenerationException;
 import com.company.demo.proccessor.VideoProccessor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
+@Slf4j
 public class GenerateVideo {
 
     private final CodePackService codePackService;
@@ -45,18 +47,22 @@ public class GenerateVideo {
             scriptService.generateScript(videoProccessor.getXmlFilePath(),videoProccessor.getScriptFilePath());
 
             //generate video
-            heyGenVideoGeneratorService.generateVideo(videoProccessor.getScriptFilePath());
+//            heyGenVideoGeneratorService.generateVideo(videoProccessor.getScriptFilePath());
 
             //retrieve video
-            videoClient.retrieveVideo("");
+//            videoClient.retrieveVideo("");
 
         }
         catch (RuntimeException ex) {
-            throw new VideoGenerationException(
-                    "Video generation failed for repo " + videoProccessor.getRepoUrl(), ex
-            );
+            log.error("Video Generation Failed : {}",ex.getMessage());
+
+//            throw new VideoGenerationException(
+//                    "Video generation failed for repo " + videoProccessor.getRepoUrl(), ex
+//            );
         } catch (Exception e) {
-            throw new RuntimeException(e);
+
+            log.error("Video Generation Failed : {}",e.getMessage());
+//            throw new RuntimeException("Large Exception"+e);
         }
 
 

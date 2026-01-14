@@ -2,15 +2,12 @@ package com.company.demo.services;
 
 
 import com.company.demo.exceptions.ScriptGenerationException;
-import com.google.api.client.util.Value;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 
-import javax.script.ScriptException;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -24,7 +21,7 @@ public class ScriptService {
     private final String apiKey;
     private final String modelName;
 
-    public ScriptService(@Value("${gemini.api.key}") String apiKey,@Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName) {
+    public ScriptService(@Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName) {
         this.apiKey = apiKey;
         this.modelName = modelName;
     }
@@ -74,7 +71,8 @@ public class ScriptService {
             GenerateContentResponse response = client.models.generateContent(modelName, prompt, null);
             return response.text();
         } catch (Exception e) {
-            throw new ScriptGenerationException("Error while calling Gemini API", e);
+            log.error("Script Generation Failed : {}",e.getMessage());
+            throw new ScriptGenerationException("Error while calling Gemini API ",e);
         }
     }
 

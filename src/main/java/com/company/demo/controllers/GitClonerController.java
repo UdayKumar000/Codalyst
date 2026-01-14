@@ -1,7 +1,6 @@
 package com.company.demo.controllers;
 
 import com.company.demo.dto.UrlRequest;
-import com.company.demo.gemini.RetrieveVideo;
 import com.company.demo.proccessor.VideoProccessor;
 import com.company.demo.services.GenerateVideo;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +24,6 @@ public class GitClonerController {
 
     @GetMapping("retrieveVideo")
     public ResponseEntity<?> retrieveVideo() {
-        RetrieveVideo.retrieveVideo();
         return ResponseEntity.ok("Server is running");
     }
 
