@@ -28,10 +28,9 @@ public class GitClonerController {
     }
 
     @PostMapping("/clone")
-    public ResponseEntity<?> gitClone(@RequestBody UrlRequest url) throws Exception {
-        VideoProccessor videoProccessor = new VideoProccessor(url.getRepoUrl());
-        generatevideo.generateVideo(videoProccessor);
-        return ResponseEntity.ok("Server is running");
+    public ResponseEntity<?> gitClone( @RequestBody UrlRequest url) {
+        generatevideo.generateVideo(url.getRepoUrl());
+        return ResponseEntity.accepted().body("Server is running");
 
     }
 }

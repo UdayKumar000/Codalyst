@@ -30,7 +30,10 @@ public class GenerateVideo {
         this.heyGenVideoGeneratorService = heyGenVideoGeneratorService;
     }
 
-    public void generateVideo(VideoProccessor videoProccessor){
+    public void generateVideo(String url){
+
+        VideoProccessor videoProccessor = new VideoProccessor(url);
+
 
         try{
 

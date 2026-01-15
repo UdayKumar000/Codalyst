@@ -48,8 +48,7 @@ public class CodePackService {
             writer.write(Files.readString(path));
             writer.write("\n</file>\n\n");
         } catch (IOException e) {
-            log.warn("Skipping file due to read error: {}", path, e);
-//            throw new CodePackException("Failed to read file: " + path, e);
+            throw new CodePackException("Failed to read file: " + path, e);
         }
     }
 
