@@ -66,17 +66,17 @@ public class CreateVideoRequest {
         position.setX(0);
         position.setX(0);
 
-        Text text = new Text();
-        text.setPosition(position);
-        text.setType("text");
-        text.setLineHeight(1);
-        text.setText(repoName);
+//        Text text = new Text();
+//        text.setPosition(position);
+//        text.setType("text");
+//        text.setLineHeight(1);
+//        text.setText(repoName);
 
         VideoInput videoInput = new VideoInput();
         videoInput.setCharacter(character);
         videoInput.setVoice(voice);
 //        videoInput.setBackground(background);
-        videoInput.setText(text);
+//        videoInput.setText(text);
 
         Dimension dimension = new Dimension();
         dimension.setWidth(1280);
