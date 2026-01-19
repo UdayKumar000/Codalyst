@@ -55,6 +55,7 @@ public class HeyGenVideoGeneratorService {
             throw new VideoGenerationException("Script file processing failed",null);
         }
         catch (Exception e) {
+            log.error("production error {}",e.getMessage());
             throw new VideoGenerationException("Invalid video request data", e);
         }
 
