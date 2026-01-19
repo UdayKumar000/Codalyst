@@ -69,7 +69,7 @@ public class CreateVideoRequest {
         VideoInput videoInput = new VideoInput();
         videoInput.setCharacter(character);
         videoInput.setVoice(voice);
-        videoInput.setBackground(background);
+//        videoInput.setBackground(background);
         videoInput.setText(text);
 
         Dimension dimension = new Dimension();
