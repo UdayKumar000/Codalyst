@@ -20,7 +20,7 @@ public class CreateVideoRequest {
         VideoRequest request = new VideoRequest();
 
         Path path = Paths.get(scriptFilePath);
-        String repoName = path.getParent().getParent().getFileName().toString();
+//        String repoName = path.getParent().getParent().getFileName().toString();
 
         if(!Files.exists(path)){
             log.error("Script file doesn't exists {}", scriptFilePath);
