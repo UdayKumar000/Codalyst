@@ -50,11 +50,11 @@ public class CreateVideoRequest {
         voice.setDuration(1);
         voice.setPitch(0);
 
-        Background background = new Background();
-        background.setType("image");
-        background.setFit("cover");
-        background.setImageAssetId("ad0e3dc084ed43ffa35fb6de889a695c");
-        background.setPlayStyle("freeze");
+//        Background background = new Background();
+//        background.setType("image");
+//        background.setFit("cover");
+//        background.setImageAssetId("ad0e3dc084ed43ffa35fb6de889a695c");
+//        background.setPlayStyle("freeze");
 
         Position position = new Position();
         position.setX(0);
