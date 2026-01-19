@@ -8,7 +8,7 @@ projectMaps/
 projectScripts/
 projectXMLs/
 projects/
-projectDiagrams/
+projectDiagrams
 .mvn/
 application.properties
 
