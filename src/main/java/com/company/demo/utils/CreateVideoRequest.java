@@ -2,6 +2,8 @@ package com.company.demo.utils;
 
 import com.company.demo.dto.*;
 import com.company.demo.dto.Character;
+import com.company.demo.exceptions.FileProcessingException;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +12,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 
+@Slf4j
 public class CreateVideoRequest {
 
     public static VideoRequest generateVideoRequest (String scriptFilePath){
@@ -20,18 +23,21 @@ public class CreateVideoRequest {
         String repoName = path.getParent().getParent().getFileName().toString();
 
         if(!Files.exists(path)){
-            throw new IllegalArgumentException("");
+            log.error("Script file doesn't exists {}", scriptFilePath);
+            throw new FileProcessingException("Script file doesn't exists",null);
         }
         String script = "";
         try {
             script = Files.readString(path);
+            if(script.isBlank()){
+                throw new FileProcessingException("Empty Script file",null);
+            }
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            log.error("Empty Script file {}", scriptFilePath);
+            throw new FileProcessingException("Empty script file ",e);
         }
 
-        if(script.isBlank()){
-            throw new IllegalArgumentException("");
-        }
+
 
         com.company.demo.dto.Character character = new Character();
         character.setType("avatar");

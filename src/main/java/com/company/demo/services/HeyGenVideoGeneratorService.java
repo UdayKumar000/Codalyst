@@ -3,6 +3,7 @@ package com.company.demo.services;
 
 import com.company.demo.dto.HeyGenResponse;
 import com.company.demo.dto.VideoRequest;
+import com.company.demo.exceptions.FileProcessingException;
 import com.company.demo.exceptions.VideoGenerationException;
 import com.company.demo.models.Project;
 import com.company.demo.repository.ProjectRepository;
@@ -49,7 +50,11 @@ public class HeyGenVideoGeneratorService {
         try {
             videoRequest = CreateVideoRequest.generateVideoRequest(scriptFilePath);
 
-        } catch (Exception e) {
+        }catch(FileProcessingException e){
+            log.error("Script file processing failed");
+            throw new VideoGenerationException("Script file processing failed",null);
+        }
+        catch (Exception e) {
             throw new VideoGenerationException("Invalid video request data", e);
         }
 
