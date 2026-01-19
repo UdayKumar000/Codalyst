@@ -29,6 +29,8 @@ public class VideoClient {
             Project project = projectRepository.findById(projectId).orElseThrow(
                     () -> new VideoClientException("Project not found", null)
             );
+
+
             return retrieveVideoFromVideoId(project.getVideoId());
 
         }catch (Exception e){
@@ -41,6 +43,11 @@ public class VideoClient {
 
     private VideoClientResponse retrieveVideoFromVideoId(String videoId){
         try{
+
+            if(videoId == null){
+                throw new VideoClientException("Video Id not found",null);
+            }
+
             JsonNode json = webClient.get().uri(uriBuilder ->
                     uriBuilder
                             .path("/v1/video_status.get")

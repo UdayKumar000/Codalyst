@@ -103,14 +103,20 @@ public class QuadrantChartGenerator {
 
         try{
 
-            Optional<Project> project = projectRepository.findById(projectId);
+            Project project = projectRepository.findById(projectId).orElseThrow(
+                    () -> new DatabaseExceptions("Project not found ",null)
+            );
 
-            if(project.isEmpty()){
-                throw new DatabaseExceptions("Project not found while generating json ",null);
+            if(project.getXmlFileUrl()==null || project.getMapFileUrl()==null){
+                throw new DatabaseExceptions("Project files not found ",null);
             }
 
-            String projectMap = getMapFileContent(project.get().getMapFileUrl());
-            String projectXml = getXmlFileContent(project.get().getXmlFileUrl());
+            String projectMap = getMapFileContent(project.getMapFileUrl());
+            String projectXml = getXmlFileContent(project.getXmlFileUrl());
+
+            if(projectMap.isEmpty() || projectXml.isEmpty()){
+                throw new ScriptGenerationException("project map and project xml are blank",null);
+            }
 
             String prompt = buildPrompt(projectMap,projectXml);
             String jsonResponse = generateJsonReponse(prompt);
