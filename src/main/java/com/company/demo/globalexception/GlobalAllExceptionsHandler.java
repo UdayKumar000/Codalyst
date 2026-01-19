@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.Instant;
 
-@RestControllerAdvice("hel")
+@RestControllerAdvice
 @Slf4j
 public class GlobalAllExceptionsHandler {
 
@@ -66,6 +66,13 @@ public class GlobalAllExceptionsHandler {
         return ResponseEntity.badRequest().body(error);
     }
 
+    // IllegalStateException
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> handleIllegalArgumentException(IllegalArgumentException ex) {
+        ApiError error = new ApiError("INVALID_ARGUMENTS", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value(), Instant.now());
+        return ResponseEntity.badRequest().body(error);
+    }
+
     // 4️⃣ Catch-all (LAST HANDLER)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiError> handleUnhandled(Exception ex) {
@@ -81,4 +88,6 @@ public class GlobalAllExceptionsHandler {
 
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
     }
+
+
 }

@@ -1,0 +1,63 @@
+graph TB
+    subgraph Frontend_Boundary [Frontend_Boundary React/Vite]
+        UI[Postman / Client UI]
+    end
+
+    subgraph Backend_Boundary [Backend_Boundary Express/Node]
+        subgraph Routes
+            PR["Product Routes (/add-product, /update-product, etc.)"]
+            IR["Inventory Routes (/inventory/*)"]
+        end
+
+        subgraph Middlewares
+            VAL[Request Body Validation]
+            AUTH[Exception Handling Logic]
+        end
+
+        subgraph Controllers
+            PC[ProductController]
+            IC[InventoryController]
+        end
+
+        subgraph Services
+            PS[ProductService]
+            IS[InventoryService]
+        end
+
+        subgraph Models
+            REP[ProductRepository]
+            ENT[Product Entity]
+            DTO[DTOs: ProductRequest/Response]
+        end
+    end
+
+    subgraph Database_Boundary [Database_Boundary MongoDB]
+        DB[(MySQL Database)]
+    end
+
+    %% Relationships
+    UI --> PR
+    UI --> IR
+    
+    PR --> VAL
+    IR --> VAL
+    
+    VAL --> PC
+    VAL --> IC
+    
+    PC --> PS
+    IC --> IS
+    
+    PS --> REP
+    IS --> REP
+    
+    PS -.-> DTO
+    IS -.-> DTO
+    REP -.-> ENT
+    
+    REP --> DB
+
+    %% Styling
+    style Frontend_Boundary fill:#f9f,stroke:#333,stroke-width:2px
+    style Backend_Boundary fill:#bbf,stroke:#333,stroke-width:2px
+    style Database_Boundary fill:#dfd,stroke:#333,stroke-width:2px

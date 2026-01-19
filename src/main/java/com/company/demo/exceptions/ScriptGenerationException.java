@@ -1,10 +1,12 @@
 package com.company.demo.exceptions;
 
-public class ScriptGenerationException extends RuntimeException {
-    public ScriptGenerationException(String message){
-        super(message);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class ScriptGenerationException extends ApplicationException {
+    public ScriptGenerationException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
-    public ScriptGenerationException(String message, Throwable cause){
-        super(message,cause);
-    }
+
 }

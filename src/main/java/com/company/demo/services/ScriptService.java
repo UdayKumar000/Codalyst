@@ -35,7 +35,7 @@ public class ScriptService {
 
             if(script == null || script.isEmpty()){
                 log.warn("Gemini API returned an empty script.");
-                return;
+                throw new ScriptGenerationException("Empty script",null);
             }
 
             writeScriptToFile(scriptFilePath,script);
@@ -106,7 +106,7 @@ public class ScriptService {
         Path path = Paths.get(filePath);
         try{
             if(!Files.exists(path) || !Files.isReadable(path)){
-                throw new ScriptGenerationException("Code file does not exists or readable "+filePath);
+                throw new ScriptGenerationException("Code file does not exists or readable "+filePath,null);
             }
             return Files.readString(path);
         }catch(IOException e){

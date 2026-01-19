@@ -1,6 +1,7 @@
 package com.company.demo.services;
 
 import com.company.demo.exceptions.GitOperationException;
+import com.company.demo.utils.DirectoryDeleter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class GitService {
 
         try{
             if (Files.exists(clonePath)) {
+                DirectoryDeleter.deleteDirectory(clonePath);
                 log.info("Repository already exists at {}, skipping clone", targetDir);
                 return;
             }
@@ -47,12 +49,12 @@ public class GitService {
 
             if (!completed) {
                 process.destroyForcibly();
-                throw new GitOperationException("Git clone timed out for "+repoUrl);
+                throw new GitOperationException("Git clone timed out for "+repoUrl,null);
             }
 
             if (process.exitValue() != 0) {
                 String errorOutput = new String(process.getInputStream().readAllBytes());
-                throw new GitOperationException("Git clone failed for "+repoUrl+". Error: "+errorOutput);
+                throw new GitOperationException("Git clone failed for "+repoUrl+". Error: "+errorOutput,null);
             }
 
             log.info("Successfully cloned repository {}",repoUrl);
@@ -69,6 +71,6 @@ public class GitService {
 
     private void validateRepoUrl(String repoUrl) {
         if(repoUrl == null || !repoUrl.startsWith("https://github.com/"))
-            throw new GitOperationException("Only GitHub repositories are allowed");
+            throw new GitOperationException("Only GitHub repositories are allowed",null);
     }
 }

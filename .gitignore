@@ -9,6 +9,7 @@ projectScripts/
 projectXMLs/
 projects/
 .mvn/
+application.properties
 
 ### STS ###
 .apt_generated

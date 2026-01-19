@@ -18,8 +18,15 @@ public class ProjectMapService {
 
     private final FileFilterUtils fileFilterUtils = new FileFilterUtils();
 
+    private final CloudDatabaseServices cloudDatabaseServices;
+    private final ProjectDatabaseService projectDatabaseService;
 
-    public void createProjectMap(String projectPath,String projectMapPath){
+    public ProjectMapService(CloudDatabaseServices cloudDatabaseServices, ProjectDatabaseService projectDatabaseService, ProjectDatabaseService projectDatabaseService1) {
+        this.cloudDatabaseServices = cloudDatabaseServices;
+        this.projectDatabaseService = projectDatabaseService1;
+    }
+
+    public void createProjectMap(Long projectId,String projectPath,String projectMapPath){
 
         File folder = new File(projectPath);
 
@@ -34,6 +41,10 @@ public class ProjectMapService {
         Path destPath = Paths.get(projectMapPath);
 
         createDirectory(destPath);
+
+        String fileUrl = cloudDatabaseServices.uploadFileToCloud(sb.toString());
+
+        projectDatabaseService.updateMapFileUrl(projectId,fileUrl);
 
         try(BufferedWriter writer = Files.newBufferedWriter(destPath)){
             writer.write(sb.toString());
@@ -54,7 +65,7 @@ public class ProjectMapService {
 
     private void validateFolder(File folder) {
         if (!folder.exists() || !folder.isDirectory()) {
-            throw new FileProcessingException("Project directory does not exist: " + folder);
+            throw new FileProcessingException("Project directory does not exist: " + folder,null);
         }
     }
 

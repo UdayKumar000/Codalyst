@@ -1,7 +1,10 @@
 package com.company.demo.exceptions;
 
-public class BadRequestException extends RuntimeException {
-    public BadRequestException(String message) {
-        super(message);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class BadRequestException extends ApplicationException {
+    public BadRequestException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
     }
 }

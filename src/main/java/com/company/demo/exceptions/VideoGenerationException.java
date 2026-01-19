@@ -1,11 +1,13 @@
 package com.company.demo.exceptions;
 
-public class VideoGenerationException extends RuntimeException {
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
 
-    public VideoGenerationException(String message, Throwable cause) {
-        super(message, cause);
-    }
-    public VideoGenerationException(String message) {
-        super(message);
+public class VideoGenerationException extends ApplicationException {
+
+
+    public VideoGenerationException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
 }

@@ -1,8 +1,12 @@
 package com.company.demo.exceptions;
 
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
-        super(message);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class ResourceNotFoundException extends ApplicationException {
+    public ResourceNotFoundException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
 }
 

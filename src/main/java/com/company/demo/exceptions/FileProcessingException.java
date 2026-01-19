@@ -1,11 +1,13 @@
 package com.company.demo.exceptions;
 
-public class FileProcessingException extends RuntimeException {
-    public FileProcessingException(String message, Throwable cause) {
-        super(message, cause);
-    }
-    public FileProcessingException(String message) {
-        super(message);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class FileProcessingException extends ApplicationException {
+
+    public FileProcessingException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
 }
 

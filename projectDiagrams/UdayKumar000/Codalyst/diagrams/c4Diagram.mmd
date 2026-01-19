@@ -1,0 +1,66 @@
+graph TB
+
+subgraph Frontend_Boundary
+    UI[React/Vite UI]
+end
+
+subgraph Backend_Boundary
+    subgraph Routes
+        GitController[GitClonerController]
+    end
+
+    subgraph Middlewares
+        ExceptionHandler[GlobalAllExceptionsHandler]
+    end
+
+    subgraph Controllers
+        VideoOrchestrator[GenerateVideo Service]
+    end
+
+    subgraph Services
+        GitSvc[GitService]
+        CodePackSvc[CodePackService]
+        ProjectMapSvc[ProjectMapService]
+        ScriptSvc[ScriptService]
+        HeyGenSvc[HeyGenVideoGeneratorService]
+        VClient[VideoClient]
+    end
+
+    subgraph Models
+        DTOs[DTO Objects: VideoRequest, UrlRequest, VideoInput]
+    end
+end
+
+subgraph Database_Boundary
+    DB[(MongoDB)]
+end
+
+subgraph External_APIs
+    GitHub[GitHub API]
+    Gemini[Gemini AI API]
+    HeyGen[HeyGen API]
+end
+
+%% Relationships
+UI --> GitController
+GitController -.-> ExceptionHandler
+GitController --> VideoOrchestrator
+GitController --> DTOs
+
+VideoOrchestrator --> GitSvc
+VideoOrchestrator --> ProjectMapSvc
+VideoOrchestrator --> CodePackSvc
+VideoOrchestrator --> ScriptSvc
+VideoOrchestrator --> HeyGenSvc
+VideoOrchestrator --> VClient
+
+GitSvc --> GitHub
+ScriptSvc --> Gemini
+HeyGenSvc --> HeyGen
+HeyGenSvc --> DTOs
+VClient --> HeyGen
+
+%% Styling
+style Frontend_Boundary fill:#f9f,stroke:#333,stroke-width:2px
+style Backend_Boundary fill:#bbf,stroke:#333,stroke-width:2px
+style Database_Boundary fill:#dfd,stroke:#333,stroke-width:2px

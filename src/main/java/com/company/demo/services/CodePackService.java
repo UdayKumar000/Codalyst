@@ -1,5 +1,6 @@
 package com.company.demo.services;
 import com.company.demo.exceptions.CodePackException;
+import com.company.demo.exceptions.DatabaseExceptions;
 import com.company.demo.utils.FileFilterUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,7 +15,15 @@ public class CodePackService {
 
     private final FileFilterUtils fileFilterUtils = new FileFilterUtils();
 
-    public void packCode(String sourcePath,String outputPath){
+    private final CloudDatabaseServices cloudDatabaseServices;
+    private final ProjectDatabaseService projectDatabaseService;
+
+    public CodePackService(CloudDatabaseServices cloudDatabaseServices, ProjectDatabaseService projectDatabaseService) {
+        this.cloudDatabaseServices = cloudDatabaseServices;
+        this.projectDatabaseService = projectDatabaseService;
+    }
+
+    public void packCode(Long projectId,String sourcePath,String outputPath){
 
         Path sourceDir = Paths.get(sourcePath);
         Path outputFile = Paths.get(outputPath);
@@ -26,18 +35,36 @@ public class CodePackService {
 
 
         try(BufferedWriter writer = Files.newBufferedWriter(outputFile);
-            Stream<Path> paths = Files.walk(sourceDir);) {
+            Stream<Path> paths = Files.walk(sourceDir)) {
             paths
                     .filter(Files::isRegularFile)
                     .filter(path -> !fileFilterUtils.isExcluded(path))
-                    .forEach(path -> writeFileContent(writer,sourceDir,path));
+                    .forEach(path -> {
+                        try{
+                            writeFileContent(writer,sourceDir,path);
+                        }catch(Exception e){
+                            log.error("Error while file writing ",e);
+                        }
+
+                    });
 
             log.info("Code packing completed successfully");
 
-
         }catch(IOException e){
             log.error("Failed to pack code", e);
-            throw new CodePackException("Failed to pack source code", e);
+            throw new CodePackException("Failed to pack source code",e);
+        }
+
+        try{
+
+            String xmlFileContent = Files.readString(outputFile);
+
+            String xmlFileUrl = cloudDatabaseServices.uploadFileToCloud(xmlFileContent);
+
+            projectDatabaseService.updateXmlFileUrl(projectId,xmlFileUrl);
+
+        }catch(Exception e){
+            throw new DatabaseExceptions("Cloud file upload error ",e);
         }
 
     }
@@ -48,7 +75,7 @@ public class CodePackService {
             writer.write(Files.readString(path));
             writer.write("\n</file>\n\n");
         } catch (IOException e) {
-            throw new CodePackException("Failed to read file: " + path, e);
+            throw new CodePackException("Failed to read file: " + path,e);
         }
     }
 
@@ -59,13 +86,13 @@ public class CodePackService {
                 Files.createDirectories(parentDir);
             }
         }catch(IOException e){
-            throw new CodePackException("Failed to create output directory", e);
+            throw new CodePackException("Failed to create output directory",e);
         }
     }
 
     private void validateSourceDirectory(Path sourceDir) {
         if (!Files.exists(sourceDir) || !Files.isDirectory(sourceDir)) {
-            throw new CodePackException("Source directory does not exist: " + sourceDir);
+            throw new CodePackException("Source directory does not exist: " + sourceDir,null);
         }
     }
 

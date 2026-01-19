@@ -1,10 +1,12 @@
 package com.company.demo.exceptions;
 
-public class GitOperationException extends RuntimeException {
-    public GitOperationException(String message, Throwable cause) {
-        super(message, cause);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class GitOperationException extends ApplicationException {
+    public GitOperationException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
-    public GitOperationException(String message) {
-        super(message);
-    }
+
 }

@@ -6,11 +6,11 @@ import java.util.Set;
 
 public class FileFilterUtils {
     private static final Set<String> EXCLUDED_DIRS = Set.of(
-            ".git", "node_modules", "target", "build", "dist", ".idea", ".vscode", ".mvn"
+            ".git", "node_modules", "target", "build", "dist", ".idea", ".vscode", ".mvn","bin"
     );
 
     private static final Set<String> EXCLUDED_EXTENSIONS = Set.of(
-            ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".exe", ".jar", ".gitattributes", ".gitignore", "mvnw", ".cmd"
+          ".bin",".project",".classpath",".map",".scss",".svg",".css", ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".exe", ".jar", ".gitattributes", ".gitignore", "mvnw", ".cmd"
     );
 
     public boolean isExcluded(Path path){

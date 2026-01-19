@@ -1,8 +1,7 @@
 package com.company.demo.webclient;
 
-import com.google.api.client.util.Value;
 import com.google.common.net.HttpHeaders;
-import com.google.common.net.MediaType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;

@@ -1,10 +1,12 @@
 package com.company.demo.exceptions;
 
-public class CodePackException extends RuntimeException{
-    public CodePackException(String message) {
-        super(message);
+import com.company.demo.globalexception.ApplicationException;
+import org.springframework.http.HttpStatus;
+
+public class CodePackException extends ApplicationException {
+    public CodePackException(String message,Throwable cause) {
+        super("ERROR",message, HttpStatus.BAD_REQUEST);
+
     }
-    public CodePackException(String message, Throwable cause) {
-        super(message, cause);
-    }
+
 }
