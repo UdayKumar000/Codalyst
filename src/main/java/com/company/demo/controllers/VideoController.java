@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api")
 public class VideoController {
 
@@ -19,7 +20,7 @@ public class VideoController {
         this.videoClient = videoClient;
     }
 
-    @GetMapping("/retrieveVideo/{projectId}")
+    @GetMapping("/getExplainerVideo/{projectId}")
     public ResponseEntity<Response<VideoClientResponse>> retrieveVideo(@PathVariable Long projectId){
         return ResponseEntity.ok().body(new Response<>(true, List.of(videoClient.retrieveVideoFromProjectId(projectId)),"success"));
     }

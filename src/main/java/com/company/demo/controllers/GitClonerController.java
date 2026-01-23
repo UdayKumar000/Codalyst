@@ -5,30 +5,40 @@ import com.company.demo.dto.VideoResponse;
 import com.company.demo.proccessor.VideoProccessor;
 import com.company.demo.services.C4DiagramGeneratorService;
 import com.company.demo.services.GenerateVideoService;
+import com.company.demo.services.UrlService;
 import com.company.demo.utils.Response;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api")
 @Slf4j
 public class GitClonerController {
 
-    GenerateVideoService generateVideoService;
-    C4DiagramGeneratorService c4DiagramGeneratorService;
+    private final GenerateVideoService generateVideoService;
+    private final UrlService urlService;
 
-    public GitClonerController(GenerateVideoService generateVideoService, C4DiagramGeneratorService c4DiagramGeneratorService) {
+    public GitClonerController(GenerateVideoService generateVideoService, UrlService urlService) {
         this.generateVideoService = generateVideoService;
-        this.c4DiagramGeneratorService = c4DiagramGeneratorService;
+        this.urlService = urlService;
     }
 
-    @GetMapping("test")
+    @GetMapping("/test")
     public ResponseEntity<?> test() {
         return ResponseEntity.ok("Server is running");
     }
 
+
+    @GetMapping("/getRepoUrl/{projectId}")
+    public ResponseEntity<Response<String>> getRepoUrl(@PathVariable Long projectId) {
+        String repoUrl = urlService.getUrlFromProjectId(projectId);
+        return ResponseEntity.ok().body(new Response<>(true, List.of(repoUrl),"success"));
+    }
 
 
     @PostMapping("/clone")

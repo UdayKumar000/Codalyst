@@ -1,7 +1,11 @@
 package com.company.demo.services;
 
 
+import com.company.demo.exceptions.DatabaseExceptions;
 import com.company.demo.exceptions.ScriptGenerationException;
+import com.company.demo.models.Project;
+import com.company.demo.repository.ProjectRepository;
+import com.company.demo.utils.FetchCloudeFilesContent;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +14,10 @@ import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,31 +28,40 @@ public class ScriptService {
 
     private final String apiKey;
     private final String modelName;
+    private final ProjectRepository projectRepository;
+    private final FetchCloudeFilesContent fetchCloudeFilesContent;
 
-    public ScriptService(@Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName) {
+    public ScriptService(@Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName, ProjectRepository projectRepository) {
         this.apiKey = apiKey;
         this.modelName = modelName;
+        this.projectRepository = projectRepository;
+        this.fetchCloudeFilesContent = new FetchCloudeFilesContent();
     }
 
-    public void generateScript (String filePath,String scriptFilePath){
+    public void generateScript (Long projectId,String filePath,String scriptFilePath){
 
-        try{
-            String projectCode = readCodeFile(filePath);
-            String prompt = buildPrompt(projectCode);
-            String script = generateScriptFromApi(prompt);
+        Project project = projectRepository.findById(projectId).orElseThrow(
+                () -> new DatabaseExceptions("Project not found ",null)
+        );
 
-            if(script == null || script.isEmpty()){
-                log.warn("Gemini API returned an empty script.");
-                throw new ScriptGenerationException("Empty script",null);
-            }
-
-            writeScriptToFile(scriptFilePath,script);
-            log.info("Script Generated Successfully : {}",scriptFilePath);
-        }catch(ScriptGenerationException e){
-            log.error("Script Generation Failed : {}",e.getMessage());
-            throw e;
+        if(project.getXmlFileUrl()==null ){
+            throw new DatabaseExceptions("Project xml file not found ",null);
         }
 
+        String projectXmlFileContent = fetchCloudeFilesContent.getFileContentFromCloud(project.getXmlFileUrl());
+
+        String prompt = buildPrompt(projectXmlFileContent);
+        String script = generateScriptFromApi(prompt);
+
+
+        if(script == null || script.isEmpty()){
+            log.warn("Gemini API returned an empty script.");
+            throw new ScriptGenerationException("Empty script",null);
+        }
+
+        writeScriptToFile(scriptFilePath,script);
+
+        log.info("Script Generated Successfully : {}",scriptFilePath);
 
     }
 
@@ -100,18 +117,6 @@ public class ScriptService {
                 Project Code:
                 %s
                 """.formatted(projectCode);
-    }
-
-    private String readCodeFile(String filePath) {
-        Path path = Paths.get(filePath);
-        try{
-            if(!Files.exists(path) || !Files.isReadable(path)){
-                throw new ScriptGenerationException("Code file does not exists or readable "+filePath,null);
-            }
-            return Files.readString(path);
-        }catch(IOException e){
-            throw new ScriptGenerationException("Error while reading file",e);
-        }
     }
 
 }

@@ -16,9 +16,6 @@ public class ProjectQuadrantInfo {
     @Column(name="score_id")
     private Long scoreId;
 
-
-
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;

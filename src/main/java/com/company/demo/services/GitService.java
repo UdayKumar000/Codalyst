@@ -27,7 +27,7 @@ public class GitService {
         try{
             if (Files.exists(clonePath)) {
                 DirectoryDeleter.deleteDirectory(clonePath);
-                log.info("Repository already exists at {}, skipping clone", targetDir);
+                log.info("Repository already exists at {}, cloning again", targetDir);
             }
 
             if (clonePath.getParent() != null) {
@@ -77,14 +77,10 @@ public class GitService {
             throw new GitOperationException("JGit error cloning repository "+repoUrl,e);
 
         }
-        catch(GitOperationException e){
-            throw e;
-        }catch (Exception e){
+        catch (Exception e){
             log.error("Unexpected error while cloning repository {}",repoUrl,e);
             throw new GitOperationException("Unexpected error while cloning repository "+repoUrl,e);
         }
-
-
 
     }
 

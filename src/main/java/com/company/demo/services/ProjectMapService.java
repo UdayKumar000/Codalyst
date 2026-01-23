@@ -38,21 +38,28 @@ public class ProjectMapService {
 
         generateTree(folder,"",sb);
 
+
+        // unnecessary
+
         Path destPath = Paths.get(projectMapPath);
 
         createDirectory(destPath);
 
+        //these both line
+
         String fileUrl = cloudDatabaseServices.uploadFileToCloud(sb.toString());
 
         projectDatabaseService.updateMapFileUrl(projectId,fileUrl);
+        log.info("Project map created and updated to cloud and database {}", projectMapPath);
 
+        // this also
         try(BufferedWriter writer = Files.newBufferedWriter(destPath)){
             writer.write(sb.toString());
             log.info("Project map created at {}", projectMapPath);
         } catch (IOException e) {
             throw new FileProcessingException("Error while writing to project map file ",e);
         }
-
+        // till this
     }
 
     private void createDirectory(Path destPath) {

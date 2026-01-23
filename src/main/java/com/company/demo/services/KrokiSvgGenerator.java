@@ -29,11 +29,11 @@ public class KrokiSvgGenerator {
         this.cloudDatabaseServices = cloudDatabaseServices;
     }
 
+    private final HttpClient client = HttpClient.newHttpClient();
 
     public String getSvg(String mmdFileContent) {
 
         try{
-            HttpClient client = HttpClient.newHttpClient();
 
             // 3. Build the POST request
             HttpRequest request = HttpRequest.newBuilder()
@@ -46,7 +46,6 @@ public class KrokiSvgGenerator {
 
 
             if (response.statusCode() != 200) {
-
                 String responseError = new String(response.body(), StandardCharsets.UTF_8);
                 log.error("Svg Response Code : {}", responseError);
                 throw new KrokiException(response.statusCode(), responseError);
@@ -57,7 +56,7 @@ public class KrokiSvgGenerator {
             return cloudDatabaseServices.uploadSvgToCloud(response.body());
 
         }catch (IOException | InterruptedException e) {
-            System.out.println(e.getMessage());
+            log.error("Error while generating SVG from Kroki", e);
             throw new KrokiException(500, e.getMessage());
         }
     }

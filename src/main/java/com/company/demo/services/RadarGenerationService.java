@@ -4,8 +4,10 @@ import com.company.demo.dto.RadarResponse;
 import com.company.demo.exceptions.DatabaseExceptions;
 import com.company.demo.exceptions.ScriptGenerationException;
 import com.company.demo.models.Project;
+import com.company.demo.models.ProjectRadarInfo;
 import com.company.demo.repository.ProjectRadarInfoRepository;
 import com.company.demo.repository.ProjectRepository;
+import com.company.demo.utils.FetchCloudeFilesContent;
 import com.company.demo.utils.GeminiJsonResponse;
 import com.company.demo.utils.Response;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -21,6 +23,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -29,23 +32,29 @@ import java.util.Optional;
 public class RadarGenerationService {
 
     private final ProjectRepository projectRepository;
-    private final ProjectRadarInfoRepository projectRadarInfoRepository;
-    private final RadarInfoDatabaseService radarInfoDatabaseService;
     private final String apiKey;
     private final String modelName;
-
-
-    public RadarGenerationService(ProjectRepository projectRepository, ProjectRadarInfoRepository projectRadarInfoRepository, RadarInfoDatabaseService radarInfoDatabaseService1, @Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")String modelName) {
+    private final FetchCloudeFilesContent  fetchCloudeFilesContent;
+    private final RadarDatabaseService radarDatabaseService;
+    private final ProjectRadarInfoRepository  projectRadarInfoRepository;
+    public RadarGenerationService(ProjectRepository projectRepository, @Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")String modelName, RadarDatabaseService radarDatabaseService, ProjectRadarInfoRepository projectRadarInfoRepository) {
         this.projectRepository = projectRepository;
-        this.projectRadarInfoRepository = projectRadarInfoRepository;
-        this.radarInfoDatabaseService = radarInfoDatabaseService1;
         this.apiKey = apiKey;
         this.modelName = modelName;
+        this.radarDatabaseService = radarDatabaseService;
+        this.projectRadarInfoRepository = projectRadarInfoRepository;
+        this.fetchCloudeFilesContent = new FetchCloudeFilesContent();
     }
 
     public Response<RadarResponse> generateArrayAndGet (Long projectId){
 
         try{
+
+            RadarResponse radarResponseExists = isDataAlreadyExists(projectId);
+
+            if(radarResponseExists != null){
+                return new Response<>(true,List.of(radarResponseExists),"success");
+            }
 
             Optional<Project> project = projectRepository.findById(projectId);
 
@@ -53,8 +62,8 @@ public class RadarGenerationService {
                 throw new DatabaseExceptions("Project not found while generating json ",null);
             }
 
-            String projectMap = getMapFileContent(project.get().getMapFileUrl());
-            String projectXml = getXmlFileContent(project.get().getXmlFileUrl());
+            String projectMap = fetchCloudeFilesContent.getFileContentFromCloud(project.get().getMapFileUrl());
+            String projectXml = fetchCloudeFilesContent.getFileContentFromCloud(project.get().getXmlFileUrl());
 
             String prompt = buildPrompt(projectMap,projectXml);
             String arrayResponse = generateArrayResponse(prompt);
@@ -67,16 +76,11 @@ public class RadarGenerationService {
 
             ObjectMapper objectMapper = new ObjectMapper();
 
-            System.out.println(arrayResponse);
-
             RadarResponse radarResponse = objectMapper.readValue(arrayResponse,RadarResponse.class);
-
-            System.out.println(radarResponse.toString());
 
             log.info("Array Generated Successfully :");
 
-
-//            radarInfoDatabaseService.updateScoresToDatabase(projectId,response);
+            radarDatabaseService.updateToDatabase(projectId,radarResponse);
 
             log.info("Radar chart calculated . :");
 
@@ -87,59 +91,35 @@ public class RadarGenerationService {
             log.error("Script Generation Failed : {}",e.getMessage());
             throw e;
         }
-
-
     }
 
-    private String getXmlFileContent(String xmlFileUrl) {
+    private RadarResponse isDataAlreadyExists(Long projectId){
 
-        try{
-            HttpClient client = HttpClient.newHttpClient();
+        Optional<ProjectRadarInfo> projectRadarInfoOptional = projectRadarInfoRepository.findByProject_Id(projectId);
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(xmlFileUrl))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-
-            return response.body();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        if(projectRadarInfoOptional.isEmpty()){
+            return null;
         }
 
-    }
+        ProjectRadarInfo projectRadarInfo = projectRadarInfoOptional.get();
 
-    private String getMapFileContent(String mapFileUrl) {
+        List<Integer> dataArray =  new ArrayList<>();
 
-        try{
-            HttpClient client = HttpClient.newHttpClient();
+        dataArray.add(projectRadarInfo.getCodeQuality());
+        dataArray.add(projectRadarInfo.getArchitecture());
+        dataArray.add(projectRadarInfo.getReliability());
+        dataArray.add(projectRadarInfo.getPerformance());
+        dataArray.add(projectRadarInfo.getSecurity());
+        dataArray.add(projectRadarInfo.getTestability());
 
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(mapFileUrl))
-                    .GET()
-                    .build();
+        RadarResponse radarResponse = new RadarResponse();
+        radarResponse.setData(dataArray);
 
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
+        return radarResponse;
 
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-            return response.body();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
 
     }
+
 
     private String generateArrayResponse(String prompt){
         try (Client client = Client.builder().apiKey(apiKey).build()) {

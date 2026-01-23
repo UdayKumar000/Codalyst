@@ -27,6 +27,7 @@ public class Project {
     private OffsetDateTime createdAt;
 
     @Column(name = "repo_url")
+    @Getter
     private String repoUrl;
 
     @Setter

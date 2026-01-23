@@ -44,18 +44,15 @@ public class HeyGenVideoGeneratorService {
             throw new VideoGenerationException("Script file path must not be empty",null);
         }
 
-
         VideoRequest videoRequest;
 
         try {
             videoRequest = CreateVideoRequest.generateVideoRequest(scriptFilePath);
-
         }catch(FileProcessingException e){
             log.error("Script file processing failed");
             throw new VideoGenerationException("Script file processing failed",null);
         }
         catch (Exception e) {
-            log.error("production error {}",e.getMessage());
             throw new VideoGenerationException("Invalid video request data", e);
         }
 
@@ -78,8 +75,6 @@ public class HeyGenVideoGeneratorService {
                     )
                     .bodyToMono(JsonNode.class)
                     .block();
-
-            System.out.println(res.toString());
 
             HeyGenResponse response = new ObjectMapper().readValue(res.toString(), HeyGenResponse.class);
 

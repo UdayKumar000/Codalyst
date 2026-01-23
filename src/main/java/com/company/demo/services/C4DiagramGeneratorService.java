@@ -6,27 +6,17 @@ import com.company.demo.exceptions.KrokiException;
 import com.company.demo.exceptions.ScriptGenerationException;
 import com.company.demo.models.Project;
 import com.company.demo.models.ProjectC4Diagrams;
-import com.company.demo.proccessor.VideoProccessor;
 import com.company.demo.repository.ProjectC4DiagramsRepository;
 import com.company.demo.repository.ProjectRepository;
+import com.company.demo.utils.FetchCloudeFilesContent;
 import com.google.genai.Client;
 import com.google.genai.types.GenerateContentResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+
 
 @Service
 @Slf4j
@@ -37,6 +27,7 @@ public class C4DiagramGeneratorService {
     private final String modelName;
     private final KrokiSvgGenerator krokiSvgGenerator;
     private final ProjectC4DiagramsRepository  projectC4DiagramsRepository;
+    private final FetchCloudeFilesContent  fetchCloudeFilesContent;
 
     public C4DiagramGeneratorService(ProjectRepository projectRepository, @Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName, KrokiSvgGenerator krokiSvgGenerator, ProjectC4DiagramsRepository projectC4DiagramsRepository) {
         this.projectRepository = projectRepository;
@@ -44,23 +35,33 @@ public class C4DiagramGeneratorService {
         this.modelName = modelName;
         this.krokiSvgGenerator = krokiSvgGenerator;
         this.projectC4DiagramsRepository = projectC4DiagramsRepository;
+        this.fetchCloudeFilesContent = new FetchCloudeFilesContent();
     }
 
     public String c4SVGGenerator(Long projectId){
 
-        String mmdFileContent = c4DiagramCodeGenerator(projectId);
 
         KrokiException lastException = null;
+
+        Project project = projectRepository.findById(projectId).orElseThrow(
+                () -> new DatabaseExceptions("Project not found",null)
+        );
+
+
+        Optional<ProjectC4Diagrams> projectC4DiagramsOptional = projectC4DiagramsRepository.findByProjectId(projectId);
+        ProjectC4Diagrams projectC4Diagrams = projectC4DiagramsOptional.orElse(new ProjectC4Diagrams());
+
+        if(projectC4DiagramsOptional.isPresent()){
+            if(projectC4DiagramsOptional.get().getC4DiagramUrl()!=null){
+                return projectC4DiagramsOptional.get().getC4DiagramUrl();
+            }
+        }
+
+        String mmdFileContent = c4DiagramCodeGenerator(project.getMapFileUrl(),project.getXmlFileUrl());
 
         for(int i=0;i<5;i++){
 
             try{
-
-                Project project = projectRepository.findById(projectId).orElseThrow(
-                        () -> new DatabaseExceptions("Project not found",null)
-                );
-
-                ProjectC4Diagrams projectC4Diagrams = projectC4DiagramsRepository.findByProjectId(projectId).orElse(new ProjectC4Diagrams());
 
                 String svgFileUrl = krokiSvgGenerator.getSvg(mmdFileContent);
 
@@ -84,24 +85,20 @@ public class C4DiagramGeneratorService {
 
             }catch (Exception e){
                 log.error("Unknown error in c4SVGGenerator failed due to {}",e.getMessage());
+                throw e;
             }
         }
-        throw new FileProcessingException(lastException.getMessage(), lastException);
+        throw new FileProcessingException("C4 SVG generation failed after retries", lastException);
     }
 
 
 
-    private String c4DiagramCodeGenerator(Long projectId){
-
+    private String c4DiagramCodeGenerator(String mapFileUrl,String xmlFileUrl){
 
         try {
 
-            Project project = projectRepository.findById(projectId).orElseThrow(
-                    () -> new DatabaseExceptions("Project not found",null)
-            );
-
-            String projectMap = getMapFileContent(project.getMapFileUrl());
-            String projectXml = getXmlFileContent(project.getXmlFileUrl());
+            String projectMap = fetchCloudeFilesContent.getFileContentFromCloud(mapFileUrl);
+            String projectXml = fetchCloudeFilesContent.getFileContentFromCloud(xmlFileUrl);
 
             String prompt = generatePrompt(projectMap,projectXml);
 
@@ -114,7 +111,10 @@ public class C4DiagramGeneratorService {
 
             return mmdFile;
 
-        }catch (Exception e) {
+        }catch(ScriptGenerationException | FileProcessingException e){
+            throw e;
+        }
+        catch (Exception e) {
             throw new FileProcessingException("Unknown error File not found",e);
         }
 
@@ -194,60 +194,4 @@ public class C4DiagramGeneratorService {
                 """.formatted(projectMap,projectXml);
     }
 
-    private String getXmlFileContent(String xmlFileUrl) {
-
-        try{
-            log.info("fetching xml file: {}", xmlFileUrl);
-
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(xmlFileUrl))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-            log.info("successfully fetched xml file: {}", xmlFileUrl);
-
-            return response.body();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    private String getMapFileContent(String mapFileUrl) {
-
-        try{
-            log.info("fetching map file: {}", mapFileUrl);
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(mapFileUrl))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-
-            log.info("successfully fetched map file: {}", mapFileUrl);
-
-            return response.body();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
 }

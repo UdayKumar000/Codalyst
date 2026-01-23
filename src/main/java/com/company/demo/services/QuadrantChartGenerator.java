@@ -8,6 +8,7 @@ import com.company.demo.models.Project;
 import com.company.demo.models.ProjectQuadrantInfo;
 import com.company.demo.repository.ProjectQuadrantInfoRepository;
 import com.company.demo.repository.ProjectRepository;
+import com.company.demo.utils.FetchCloudeFilesContent;
 import com.company.demo.utils.GeminiJsonResponse;
 import com.company.demo.utils.Response;
 import com.google.genai.Client;
@@ -15,18 +16,10 @@ import com.google.genai.types.GenerateContentResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
-
-import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 
@@ -36,28 +29,47 @@ public class QuadrantChartGenerator {
 
     private final ProjectRepository projectRepository;
     private final ProjectQuadrantInfoRepository projectQuadrantInfoRepository;
-    QuadrantInfoDatabaseService quadrantInfoDatabaseService;
+    private final QuadrantInfoDatabaseService quadrantInfoDatabaseService;
+    private final FetchCloudeFilesContent fetchCloudeFilesContent;
     private final String apiKey;
     private final String modelName;
 
-    public QuadrantChartGenerator(QuadrantInfoDatabaseService quadrantInfoDatabaseService, ProjectRepository projectRepository, @Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName, ProjectQuadrantInfoRepository projectQuadrantInfoRepository) {
+    public QuadrantChartGenerator(QuadrantInfoDatabaseService quadrantInfoDatabaseService, ProjectRepository projectRepository , @Value("${gemini.api.key}") String apiKey, @Value("${gemini.api.model:gemini-3-flash-preview}")  String modelName, ProjectQuadrantInfoRepository projectQuadrantInfoRepository) {
         this.projectRepository = projectRepository;
         this.apiKey = apiKey;
         this.modelName = modelName;
         this.quadrantInfoDatabaseService = quadrantInfoDatabaseService;
         this.projectQuadrantInfoRepository = projectQuadrantInfoRepository;
+        this.fetchCloudeFilesContent = new FetchCloudeFilesContent();
     }
 
-    public Response<QudrantResponse> getScoresFromProjectId (Long projectId){
+    public Response<QudrantResponse> getScoresIfAlreadyExists(Long projectId){
 
         try{
             List<ProjectQuadrantInfo> info = projectQuadrantInfoRepository.findByProject_Id(projectId);
 
             if (info.isEmpty()) {
-                throw new DatabaseExceptions("Project not found", null);
+                return null;
             }
 
             List<QudrantResponse> response = getQuadrantResponse(info);
+            return new Response<>(true,response,"success");
+
+        }catch (DatabaseExceptions e){
+            throw e;
+        }catch (Exception e){
+            throw new DatabaseExceptions("Error : ",e);
+        }
+
+
+    }
+
+    public Response<QudrantResponse>getScoresFromProjectId (Long projectId){
+
+        try{
+            List<ProjectQuadrantInfo> info = projectQuadrantInfoRepository.findByProject_Id(projectId);
+
+           List<QudrantResponse> response = getQuadrantResponse(info);
             return new Response<>(true,response,"success");
 
         }catch (DatabaseExceptions e){
@@ -111,15 +123,15 @@ public class QuadrantChartGenerator {
                 throw new DatabaseExceptions("Project files not found ",null);
             }
 
-            String projectMap = getMapFileContent(project.getMapFileUrl());
-            String projectXml = getXmlFileContent(project.getXmlFileUrl());
+            String projectXmlFileContent = fetchCloudeFilesContent.getFileContentFromCloud(project.getMapFileUrl());
+            String projectMapContent = fetchCloudeFilesContent.getFileContentFromCloud(project.getXmlFileUrl());
 
-            if(projectMap.isEmpty() || projectXml.isEmpty()){
+            if(projectMapContent.isEmpty() || projectXmlFileContent.isEmpty()){
                 throw new ScriptGenerationException("project map and project xml are blank",null);
             }
 
-            String prompt = buildPrompt(projectMap,projectXml);
-            String jsonResponse = generateJsonReponse(prompt);
+            String prompt = buildPrompt(projectMapContent,projectXmlFileContent);
+            String jsonResponse = generateJsonResponse(prompt);
 
 
             if(jsonResponse == null || jsonResponse.isEmpty()){
@@ -130,8 +142,6 @@ public class QuadrantChartGenerator {
             ObjectMapper objectMapper = new ObjectMapper();
 
             GeminiJsonResponse response = objectMapper.readValue(jsonResponse,GeminiJsonResponse.class);
-
-            System.out.println(response.toString());
 
             log.info("Json Generated Successfully :");
 
@@ -147,59 +157,7 @@ public class QuadrantChartGenerator {
 
     }
 
-
-    private String getXmlFileContent(String xmlFileUrl) {
-
-        try{
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(xmlFileUrl))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-
-            return response.body();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    private String getMapFileContent(String mapFileUrl) {
-
-        try{
-            HttpClient client = HttpClient.newHttpClient();
-
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(mapFileUrl))
-                    .GET()
-                    .build();
-
-            HttpResponse<String> response = client.send(request,HttpResponse.BodyHandlers.ofString());
-
-            if (response.statusCode() != 200) {
-                throw new RuntimeException("Failed to fetch file. Status: " + response.statusCode());
-            }
-            return response.body();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-
-    private String generateJsonReponse(String prompt){
+    private String generateJsonResponse(String prompt){
         try (Client client = Client.builder().apiKey(apiKey).build()) {
             GenerateContentResponse response = client.models.generateContent(modelName, prompt, null);
             return response.text();

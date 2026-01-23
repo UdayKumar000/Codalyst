@@ -6,13 +6,16 @@ import com.company.demo.services.C4DiagramGeneratorService;
 import com.company.demo.services.QuadrantChartGenerator;
 import com.company.demo.services.RadarGenerationService;
 import com.company.demo.utils.Response;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/api")
+@Slf4j
 public class VisualsController {
 
     private final QuadrantChartGenerator quadrantChartGenerator;
@@ -27,6 +30,7 @@ public class VisualsController {
 
     @GetMapping("/getRadarChart/{projectId}")
     public ResponseEntity<Response<RadarResponse>> radarChart(@PathVariable Long projectId) {
+        log.info("Received getRadarChart request for projectId: {}", projectId);
         Response<RadarResponse> response = radarGenerationService.generateArrayAndGet(projectId);
             return ResponseEntity.ok().body(response);
     }
@@ -34,13 +38,19 @@ public class VisualsController {
 
     @GetMapping("/getQuadrantChart/{projectId}")
     public ResponseEntity<Response<QudrantResponse>> quadrantChart(@PathVariable Long projectId) {
+        log.info("Received quadrantChart request for projectId: {}", projectId);
+        Response<QudrantResponse> response = quadrantChartGenerator.getScoresIfAlreadyExists(projectId);
+        if(response!=null){
+            return ResponseEntity.ok().body(response);
+        }
         quadrantChartGenerator.generateJson(projectId);
-        Response<QudrantResponse> response = quadrantChartGenerator.getScoresFromProjectId(projectId);
+        response = quadrantChartGenerator.getScoresFromProjectId(projectId);
         return ResponseEntity.ok().body(response);
     }
 
     @GetMapping("/getC4Diagram/{projectId}")
     public ResponseEntity<Response<String>> getSvgDiagram(@PathVariable Long projectId) {
+        log.info("Received getSvgDiagram request for projectId: {}", projectId);
         String svgFileUrl = c4DiagramGeneratorService.c4SVGGenerator(projectId);
         Response<String> response = new Response<>(true,List.of(svgFileUrl),"success");
         return ResponseEntity.ok().body(response);

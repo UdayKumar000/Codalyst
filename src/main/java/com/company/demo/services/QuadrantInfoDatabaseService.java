@@ -46,7 +46,11 @@ public class QuadrantInfoDatabaseService {
                 projectQuadrantInfo.setFileLayer(dataValue.getFileLayer());
                 projectQuadrantInfoRepository.save(projectQuadrantInfo);
             }
-        }catch(Exception e){
+        }catch (DatabaseExceptions e){
+            log.error("Project not found",e);
+            throw e;
+        }
+        catch(Exception e){
             log.error(("Unknown error while updating quadrant scores to database"),e);
             throw e;
         }

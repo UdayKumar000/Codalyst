@@ -59,12 +59,10 @@ public class GenerateVideoService {
             codePackService.packCode(project.getId(),videoProccessor.getTempRepoPath(),videoProccessor.getXmlFilePath());
 
             //generate script
-            scriptService.generateScript(videoProccessor.getXmlFilePath(),videoProccessor.getScriptFilePath());
-
-
+            scriptService.generateScript(project.getId(),videoProccessor.getXmlFilePath(),videoProccessor.getScriptFilePath());
 
             if(project.getVideoId()!=null){
-                log.info("Project has been registered with valid videoid");
+                log.info("Project has been registered with valid video id");
                     return new Response<>(true, List.of(new VideoResponse(project.getId(),project.getVideoId())),"Video Generation Started");
 
             }
@@ -84,7 +82,6 @@ public class GenerateVideoService {
             log.error("Video Generation Failed : {}",ex.getMessage());
             throw ex;
         } catch (Exception e) {
-
             log.error("Unknown Video Generation Exception : {}",e.getMessage());
             throw e;
         }
