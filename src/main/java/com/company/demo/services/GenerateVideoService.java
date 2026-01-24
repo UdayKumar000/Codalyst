@@ -52,6 +52,11 @@ public class GenerateVideoService {
             // project already exists return it if not create
             Project project = projectDatabaseService.registerToDatabase(videoProccessor.getRepoUrl());
 
+            if(project.getVideoId()!=null){
+                log.info("Project has been registered with valid video id already");
+                return new Response<>(true, List.of(new VideoResponse(project.getId(),project.getVideoId())),"Video Generation Started");
+            }
+
             //generate project map
             projectMapService.createProjectMap(project.getId(),videoProccessor.getTempRepoPath(),videoProccessor.getProjectMapPath());
 
@@ -60,12 +65,6 @@ public class GenerateVideoService {
 
             //generate script
             scriptService.generateScript(project.getId(),videoProccessor.getXmlFilePath(),videoProccessor.getScriptFilePath());
-
-            if(project.getVideoId()!=null){
-                log.info("Project has been registered with valid video id");
-                    return new Response<>(true, List.of(new VideoResponse(project.getId(),project.getVideoId())),"Video Generation Started");
-
-            }
 
             //generate video
             String videoId = heyGenVideoGeneratorService.generateVideo(videoProccessor.getRepoUrl(),videoProccessor.getScriptFilePath());
