@@ -113,7 +113,8 @@ public class ScriptService {
                 12. If the code quality is poor or very bad, clearly state that it is poor and explain why in one or two sentences.
                 13. If there are any critical concerns such as security issues, performance risks, bad design, or maintainability problems, mention them only in this final code quality section.
                 14. Do not place the code quality evaluation anywhere else except at the end.
-
+                15. Please generate the script content only for 1 to 1.5 minutes not more than that                
+                
                 Project Code:
                 %s
                 """.formatted(projectCode);
