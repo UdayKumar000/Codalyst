@@ -25,6 +25,7 @@ public class VideoClient {
     }
 
     public VideoClientResponse retrieveVideoFromProjectId(Long projectId){
+        log.info("Retrieving video from project id {}", projectId);
         try {
             Project project = projectRepository.findById(projectId).orElseThrow(
                     () -> new VideoClientException("Project not found", null)

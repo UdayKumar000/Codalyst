@@ -15,7 +15,6 @@ import java.util.List;
 
 
 @RestController
-@CrossOrigin(origins = "*")
 @RequestMapping("/api")
 @Slf4j
 public class GitClonerController {
