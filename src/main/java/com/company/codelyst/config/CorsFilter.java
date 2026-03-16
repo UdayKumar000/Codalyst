@@ -21,7 +21,7 @@ public class CorsFilter {
 
             res.setHeader(
                     "Access-Control-Allow-Origin",
-                    "http://localhost:5173"
+                    "https://codelyst.onrender.com"
             );
             res.setHeader(
                     "Access-Control-Allow-Methods",
