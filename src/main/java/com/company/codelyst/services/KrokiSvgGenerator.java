@@ -1,0 +1,59 @@
+package com.company.codelyst.services;
+
+import com.company.codelyst.exceptions.KrokiException;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+
+@Service
+@Slf4j
+public class KrokiSvgGenerator {
+
+    @Value("${kroki.base-url}")
+    private String krokiUrl;
+    private final CloudDatabaseServices cloudDatabaseServices;
+
+    public KrokiSvgGenerator(CloudDatabaseServices cloudDatabaseServices) {
+        this.cloudDatabaseServices = cloudDatabaseServices;
+    }
+
+    private final HttpClient client = HttpClient.newHttpClient();
+
+    public String getSvg(String mmdFileContent) {
+
+        try{
+
+            // 3. Build the POST request
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(krokiUrl))
+                    .header("Content-Type", "text/plain")
+                    .POST(HttpRequest.BodyPublishers.ofString(mmdFileContent))
+                    .build();
+
+            HttpResponse<byte[]> response = client.send(request, HttpResponse.BodyHandlers.ofByteArray());
+
+
+            if (response.statusCode() != 200) {
+                String responseError = new String(response.body(), StandardCharsets.UTF_8);
+                log.error("Svg Response Code : {}", responseError);
+                throw new KrokiException(response.statusCode(), responseError);
+            }
+
+            log.info("SVG Generated Successfully");
+
+            return cloudDatabaseServices.uploadSvgToCloud(response.body());
+
+        }catch (IOException | InterruptedException e) {
+            log.error("Error while generating SVG from Kroki", e);
+            throw new KrokiException(500, e.getMessage());
+        }
+    }
+
+}

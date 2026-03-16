@@ -1,15 +1,11 @@
 HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+
 
 projectMaps/
 projectScripts/
 projectXMLs/
 projects/
 projectDiagrams
-.mvn/
 application.properties
 
 ### STS ###
