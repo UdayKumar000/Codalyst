@@ -17,7 +17,7 @@ public class CorsConfig {
             public void addCorsMappings(CorsRegistry registry) {
 
                 registry.addMapping("/**")
-                        .allowedOrigins("https://codelyst.onrender.com")
+                        .allowedOrigins("https://codelyst.onrender.com","http://localhost:5173")
                         .allowedMethods("*")
                         .allowedHeaders("*");
             }
